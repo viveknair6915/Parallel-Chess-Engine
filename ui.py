@@ -3,6 +3,12 @@ import subprocess
 import os
 import numpy as np
 import matplotlib.pyplot as plt
+import chess
+import chess.svg
+import cairosvg
+from PIL import Image
+import io
+import time
 
 st.set_page_config(page_title="Parallel Chess Engine Dashboard", layout="centered")
 
@@ -75,7 +81,58 @@ if results and len(results) >= 4:
         if len(results) > 4 and results[-1].strip():
             pv_line = results[-1].strip()
             st.subheader("Best Move Sequence (Principal Variation)")
-            st.info(f"{' → '.join(pv_line.split())}")
+            pv_moves = pv_line.split()
+            st.info(f"{' → '.join(pv_moves)}")
+
+            st.subheader("Visualize Best Move Sequence on Chessboard")
+            board = chess.Board()
+            move_uci_list = pv_moves
+            max_step = len(move_uci_list)
+
+            # Move list table
+            move_table = []
+            for idx, move in enumerate(move_uci_list):
+                move_num = (idx // 2) + 1
+                side = "White" if idx % 2 == 0 else "Black"
+                move_table.append({"Move #": move_num, "Side": side, "Move": move})
+            st.table(move_table)
+
+            # Download PGN button
+            pgn = chess.pgn.Game()
+            node = pgn
+            for move in move_uci_list:
+                node = node.add_variation(chess.Move.from_uci(move))
+            import io as _io
+            pgn_str = str(pgn)
+            st.download_button("Download PGN", data=pgn_str, file_name="best_line.pgn", mime="text/plain")
+
+            # Board animation controls
+            play = st.checkbox("Play Animation", value=False)
+            anim_speed = st.slider("Animation speed (sec per move)", 0.2, 2.0, 1.0, 0.1)
+            if play:
+                for step in range(max_step + 1):
+                    board = chess.Board()
+                    for i in range(step):
+                        try:
+                            board.push_uci(move_uci_list[i])
+                        except Exception:
+                            break
+                    svg_board = chess.svg.board(board=board, lastmove=chess.Move.from_uci(move_uci_list[step-1]) if step > 0 else None)
+                    png_bytes = cairosvg.svg2png(bytestring=svg_board.encode('utf-8'))
+                    st.image(Image.open(io.BytesIO(png_bytes)), caption=f"Board after {step} move(s)")
+                    time.sleep(anim_speed)
+                st.stop()
+            else:
+                step = st.slider("Step through moves", 0, max_step, 0)
+                board = chess.Board()
+                for i in range(step):
+                    try:
+                        board.push_uci(move_uci_list[i])
+                    except Exception:
+                        break
+                svg_board = chess.svg.board(board=board, lastmove=chess.Move.from_uci(move_uci_list[step-1]) if step > 0 else None)
+                png_bytes = cairosvg.svg2png(bytestring=svg_board.encode('utf-8'))
+                st.image(Image.open(io.BytesIO(png_bytes)), caption=f"Board after {step} move(s)")
         if np.mean(times_par) < np.mean(times_seq):
             st.success(f"Parallel search is faster than sequential search by {np.mean(times_seq) - np.mean(times_par):.3f} seconds per move on average.")
         else:
