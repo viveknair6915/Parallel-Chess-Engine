@@ -1,6 +1,7 @@
 import streamlit as st
 import subprocess
 import os
+import chess.pgn
 import numpy as np
 import matplotlib.pyplot as plt
 import chess

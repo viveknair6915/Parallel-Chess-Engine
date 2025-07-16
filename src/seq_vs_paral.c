@@ -4,6 +4,7 @@
 #include <stdbool.h>
 #include <limits.h>
 #include<sys/time.h>
+#include <string.h>
 
 
 #define MAX +1
@@ -109,6 +110,7 @@ int D[8][2] = { {+1,0} , {+1,+1} , {0,+1} , {-1,+1} , {-1,0} , {-1,-1} , {0,-1} 
 // Add a struct to represent a move in algebraic notation
 struct move {
     int from_x, from_y, to_x, to_y;
+    char move_uci[6]; // UCI notation for this move
 };
 
 // Helper to convert board coordinates to algebraic notation
