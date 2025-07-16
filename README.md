@@ -1,5 +1,48 @@
 # Parallel Chess Engine: Sequential vs. Parallel Search with OpenMP
 
+---
+
+## Streamlit Dashboard: Visual Highlights
+
+Experience the interactive analysis and visualization features of this project through the following Streamlit UI screenshots:
+
+---
+
+### Engine Control & Summary
+
+![Engine Run and Summary](images/Screenshot%202025-07-16%20223147.png)
+*Run the chess engine, select search depth, and view a summary of performance metrics directly from the dashboard.*
+
+---
+
+### Best Move Sequence & Chessboard Visualization
+
+![Best Move Sequence and Board](images/Screenshot%202025-07-16%20223245.png)
+*See the principal variation (best move sequence) and step through it on a real chessboard, move by move.*
+
+---
+
+###  Move List & Animation Controls
+
+![Move List and Animation](images/Screenshot%202025-07-16%20223343.png)
+*Review the move list table, animate the best line, and visualize each position interactively.*
+
+---
+
+### Performance Analysis
+
+![Performance Plots](images/Screenshot%202025-07-16%20223355.png)
+*Compare sequential and parallel search with bar charts for execution time and nodes visited.*
+
+---
+
+### Error Handling & Insights
+
+![Error Handling and Insights](images/Screenshot%202025-07-16%20223412.png)
+*Robust error handling and clear interpretation of results, ensuring a smooth user experience.*
+
+---
+
 ## Summary
 
 This project demonstrates the impact of parallel programming on a chess engine's search algorithm using OpenMP. It compares the performance of a sequential minimax/alpha-beta search with a parallelized version (root splitting) in C. The focus is on execution time and search efficiency, not on chess strength.
