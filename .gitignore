@@ -1,0 +1,20 @@
+# Compiled binary
+chess
+
+# Output files
+results.txt
+results_plot.png
+
+# Python virtual environment
+venv/
+
+# Python cache
+__pycache__/
+*.pyc
+
+# Jupyter notebook checkpoints
+.ipynb_checkpoints/
+
+# OS files
+.DS_Store
+Thumbs.db 

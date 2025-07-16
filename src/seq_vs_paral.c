@@ -960,16 +960,18 @@ void generer_succ( struct config conf, int mode, struct config T[], int *n )
 int minmax_ab_pv(struct config conf, int mode, int niv, int alpha, int beta, long * nb_noeuds, long * nb_coupes, struct move *pv, int *pv_length) {
     int n, i, score, score2, best_index = -1;
     struct config T[100];
-    struct move child_pv[100];
+    struct move *child_pv = malloc(100 * sizeof(struct move));
     int child_pv_length;
     *nb_noeuds += 1;
 
     if (feuille(conf, &score)) {
-        *pv_length = 0;
+        if (pv && pv_length) *pv_length = 0;
+        free(child_pv);
         return score;
     }
     if (niv == 0) {
-        *pv_length = 0;
+        if (pv && pv_length) *pv_length = 0;
+        free(child_pv);
         return estim(conf);
     }
     if (mode == MAX) {
@@ -977,24 +979,26 @@ int minmax_ab_pv(struct config conf, int mode, int niv, int alpha, int beta, lon
         score = alpha;
         for (i = 0; i < n; i++) {
             child_pv_length = 0;
-            score2 = minmax_ab_pv(T[i], MIN, niv - 1, score, beta, nb_noeuds, nb_coupes, child_pv, &child_pv_length);
+            score2 = minmax_ab_pv(T[i], MIN, niv - 1, score, beta, nb_noeuds, nb_coupes, pv ? child_pv : NULL, pv_length ? &child_pv_length : NULL);
             if (score2 > score) {
                 score = score2;
                 best_index = i;
-                *pv_length = child_pv_length + 1;
-                pv[0].from_x = -1; // will fill below
-                pv[0].from_y = -1;
-                pv[0].to_x = -1;
-                pv[0].to_y = -1;
-                for (int k = 0; k < child_pv_length; k++) pv[k + 1] = child_pv[k];
+                if (pv && pv_length) {
+                    *pv_length = child_pv_length + 1;
+                    pv[0].from_x = -1; // will fill below
+                    pv[0].from_y = -1;
+                    pv[0].to_x = -1;
+                    pv[0].to_y = -1;
+                    for (int k = 0; k < child_pv_length; k++) pv[k + 1] = child_pv[k];
+                }
             }
             if (score > beta) {
                 *nb_coupes += 1;
+                free(child_pv);
                 return beta;
             }
         }
-        if (best_index != -1 && *pv_length > 0) {
-            // Find the move that led from conf to T[best_index]
+        if (best_index != -1 && pv && pv_length && *pv_length > 0) {
             for (int fx = 0; fx < 8; fx++) {
                 for (int fy = 0; fy < 8; fy++) {
                     if (conf.mat[fx][fy] != 0 && T[best_index].mat[fx][fy] == 0) {
@@ -1008,7 +1012,7 @@ int minmax_ab_pv(struct config conf, int mode, int niv, int alpha, int beta, lon
                     }
                 }
             }
-        } else {
+        } else if (pv && pv_length) {
             *pv_length = 0;
         }
     } else {
@@ -1016,23 +1020,26 @@ int minmax_ab_pv(struct config conf, int mode, int niv, int alpha, int beta, lon
         score = beta;
         for (i = 0; i < n; i++) {
             child_pv_length = 0;
-            score2 = minmax_ab_pv(T[i], MAX, niv - 1, alpha, score, nb_noeuds, nb_coupes, child_pv, &child_pv_length);
+            score2 = minmax_ab_pv(T[i], MAX, niv - 1, alpha, score, nb_noeuds, nb_coupes, pv ? child_pv : NULL, pv_length ? &child_pv_length : NULL);
             if (score2 < score) {
                 score = score2;
                 best_index = i;
-                *pv_length = child_pv_length + 1;
-                pv[0].from_x = -1; // will fill below
-                pv[0].from_y = -1;
-                pv[0].to_x = -1;
-                pv[0].to_y = -1;
-                for (int k = 0; k < child_pv_length; k++) pv[k + 1] = child_pv[k];
+                if (pv && pv_length) {
+                    *pv_length = child_pv_length + 1;
+                    pv[0].from_x = -1; // will fill below
+                    pv[0].from_y = -1;
+                    pv[0].to_x = -1;
+                    pv[0].to_y = -1;
+                    for (int k = 0; k < child_pv_length; k++) pv[k + 1] = child_pv[k];
+                }
             }
             if (score < alpha) {
                 *nb_coupes += 1;
+                free(child_pv);
                 return alpha;
             }
         }
-        if (best_index != -1 && *pv_length > 0) {
+        if (best_index != -1 && pv && pv_length && *pv_length > 0) {
             for (int fx = 0; fx < 8; fx++) {
                 for (int fy = 0; fy < 8; fy++) {
                     if (conf.mat[fx][fy] != 0 && T[best_index].mat[fx][fy] == 0) {
@@ -1046,12 +1053,13 @@ int minmax_ab_pv(struct config conf, int mode, int niv, int alpha, int beta, lon
                     }
                 }
             }
-        } else {
+        } else if (pv && pv_length) {
             *pv_length = 0;
         }
     }
     if (score == +INFINI) score = +100;
     if (score == -INFINI) score = -100;
+    free(child_pv);
     return score;
 }
 
