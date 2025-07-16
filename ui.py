@@ -72,6 +72,10 @@ if results and len(results) >= 4:
         st.pyplot(fig2)
 
         st.header("3. Interpretation & Insights")
+        if len(results) > 4 and results[-1].strip():
+            pv_line = results[-1].strip()
+            st.subheader("Best Move Sequence (Principal Variation)")
+            st.info(f"{' → '.join(pv_line.split())}")
         if np.mean(times_par) < np.mean(times_seq):
             st.success(f"Parallel search is faster than sequential search by {np.mean(times_seq) - np.mean(times_par):.3f} seconds per move on average.")
         else:

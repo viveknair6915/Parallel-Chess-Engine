@@ -105,6 +105,20 @@ int KingO[64] = {
 int dC[8][2] = { {-2,+1} , {-1,+2} , {+1,+2} , {+2,+1} , {+2,-1} , {+1,-2} , {-1,-2} , {-2,-1} };
 int D[8][2] = { {+1,0} , {+1,+1} , {0,+1} , {-1,+1} , {-1,0} , {-1,-1} , {0,-1} , {+1,-1} }; 
 
+// Add a struct to represent a move in algebraic notation
+struct move {
+    int from_x, from_y, to_x, to_y;
+};
+
+// Helper to convert board coordinates to algebraic notation
+void move_to_algebraic(int from_x, int from_y, int to_x, int to_y, char *out) {
+    out[0] = from_y + 'a';
+    out[1] = (8 - from_x) + '0';
+    out[2] = to_y + 'a';
+    out[3] = (8 - to_x) + '0';
+    out[4] = '\0';
+}
+
 int minmax_ab( struct config conf, int mode, int niv, int min, int max, long * nb_noeuds, long * nb_coupes);
 
 
@@ -942,59 +956,104 @@ void generer_succ( struct config conf, int mode, struct config T[], int *n )
 }
 
 
-int minmax_ab( struct config conf, int mode, int niv, int alpha, int beta, long * nb_noeuds, long * nb_coupes)
-{
-	
- 	int n, i, score, score2;
- 	struct config T[100];
-	*nb_noeuds += 1;
+// Modified minmax_ab to track principal variation
+int minmax_ab_pv(struct config conf, int mode, int niv, int alpha, int beta, long * nb_noeuds, long * nb_coupes, struct move *pv, int *pv_length) {
+    int n, i, score, score2, best_index = -1;
+    struct config T[100];
+    struct move child_pv[100];
+    int child_pv_length;
+    *nb_noeuds += 1;
 
-   	if ( feuille(conf, &score) ) 
-		return score;
-
-   	if ( niv == 0 ) 
-		return estim(conf);
-
-   	if ( mode == MAX ) 
-	{
-
-	   generer_succ( conf, MAX, T, &n );
-
-	   score = alpha;
-	   for ( i=0; i<n; i++ ) 
-	   {
-   	    	score2 = minmax_ab( T[i], MIN, niv-1, score, beta, nb_noeuds, nb_coupes);
-			if (score2 > score) score = score2;
-			if (score > beta) 
-			{
-					*nb_coupes += 1;
-					return beta;   
-			}
-	   } 
-	}
-	else  
-	{ 
-
-	   generer_succ( conf, MIN, T, &n );
-
-	   score = beta;
-	   for ( i=0; i<n; i++ ) 
-	   {
-   	    	score2 = minmax_ab( T[i], MAX, niv-1, alpha, score, nb_noeuds, nb_coupes);
-			if (score2 < score) score = score2;
-			if (score < alpha) 
-			{
-					*nb_coupes += 1;
-					return alpha;   
-	    	}
-	   }
-	}
-
-	if ( score == +INFINI ) score = +100;
-    if ( score == -INFINI ) score = -100;
-	return score;
-
-} 
+    if (feuille(conf, &score)) {
+        *pv_length = 0;
+        return score;
+    }
+    if (niv == 0) {
+        *pv_length = 0;
+        return estim(conf);
+    }
+    if (mode == MAX) {
+        generer_succ(conf, MAX, T, &n);
+        score = alpha;
+        for (i = 0; i < n; i++) {
+            child_pv_length = 0;
+            score2 = minmax_ab_pv(T[i], MIN, niv - 1, score, beta, nb_noeuds, nb_coupes, child_pv, &child_pv_length);
+            if (score2 > score) {
+                score = score2;
+                best_index = i;
+                *pv_length = child_pv_length + 1;
+                pv[0].from_x = -1; // will fill below
+                pv[0].from_y = -1;
+                pv[0].to_x = -1;
+                pv[0].to_y = -1;
+                for (int k = 0; k < child_pv_length; k++) pv[k + 1] = child_pv[k];
+            }
+            if (score > beta) {
+                *nb_coupes += 1;
+                return beta;
+            }
+        }
+        if (best_index != -1 && *pv_length > 0) {
+            // Find the move that led from conf to T[best_index]
+            for (int fx = 0; fx < 8; fx++) {
+                for (int fy = 0; fy < 8; fy++) {
+                    if (conf.mat[fx][fy] != 0 && T[best_index].mat[fx][fy] == 0) {
+                        for (int tx = 0; tx < 8; tx++) {
+                            for (int ty = 0; ty < 8; ty++) {
+                                if (conf.mat[fx][fy] != 0 && conf.mat[fx][fy] == T[best_index].mat[tx][ty] && (fx != tx || fy != ty)) {
+                                    pv[0].from_x = fx; pv[0].from_y = fy; pv[0].to_x = tx; pv[0].to_y = ty;
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        } else {
+            *pv_length = 0;
+        }
+    } else {
+        generer_succ(conf, MIN, T, &n);
+        score = beta;
+        for (i = 0; i < n; i++) {
+            child_pv_length = 0;
+            score2 = minmax_ab_pv(T[i], MAX, niv - 1, alpha, score, nb_noeuds, nb_coupes, child_pv, &child_pv_length);
+            if (score2 < score) {
+                score = score2;
+                best_index = i;
+                *pv_length = child_pv_length + 1;
+                pv[0].from_x = -1; // will fill below
+                pv[0].from_y = -1;
+                pv[0].to_x = -1;
+                pv[0].to_y = -1;
+                for (int k = 0; k < child_pv_length; k++) pv[k + 1] = child_pv[k];
+            }
+            if (score < alpha) {
+                *nb_coupes += 1;
+                return alpha;
+            }
+        }
+        if (best_index != -1 && *pv_length > 0) {
+            for (int fx = 0; fx < 8; fx++) {
+                for (int fy = 0; fy < 8; fy++) {
+                    if (conf.mat[fx][fy] != 0 && T[best_index].mat[fx][fy] == 0) {
+                        for (int tx = 0; tx < 8; tx++) {
+                            for (int ty = 0; ty < 8; ty++) {
+                                if (conf.mat[fx][fy] != 0 && conf.mat[fx][fy] == T[best_index].mat[tx][ty] && (fx != tx || fy != ty)) {
+                                    pv[0].from_x = fx; pv[0].from_y = fy; pv[0].to_x = tx; pv[0].to_y = ty;
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        } else {
+            *pv_length = 0;
+        }
+    }
+    if (score == +INFINI) score = +100;
+    if (score == -INFINI) score = -100;
+    return score;
+}
 
 int minmax( struct config conf, int mode, int niv)
 {
@@ -1160,7 +1219,7 @@ int main( int argc, char *argv[] )
 					local_nb_coupes1 = 0;
 					local_nb_noeuds1 = 0;
 					
-					cout = minmax_ab(T[i], MIN, hauteur-1, alpha, beta, &local_nb_noeuds1, &local_nb_coupes1);
+					cout = minmax_ab_pv(T[i], MIN, hauteur-1, alpha, beta, &local_nb_noeuds1, &local_nb_coupes1, NULL, NULL);
 					#pragma omp critical
 					{
 						if (cout > score) 
@@ -1178,7 +1237,7 @@ int main( int argc, char *argv[] )
 				{
 					local_nb_coupes2 = 0;
 					local_nb_noeuds2 = 0;
-					cout = minmax_ab(T[i], MAX, hauteur-1, alpha, beta, &local_nb_noeuds2, &local_nb_coupes2);
+					cout = minmax_ab_pv(T[i], MAX, hauteur-1, alpha, beta, &local_nb_noeuds2, &local_nb_coupes2, NULL, NULL);
 					
 					#pragma omp critical
 					{
@@ -1251,7 +1310,51 @@ int main( int argc, char *argv[] )
 
 	fclose(f);
 
-	return 0;
+    // Print formatted summary to terminal
+    printf("\n==================== Chess Engine Search Summary ====================\n");
+    printf("%-25s %-15s %-15s\n", "Metric", "Sequential", "Parallel");
+    printf("-------------------------------------------------------------------\n");
+    printf("%-25s %-15ld %-15ld\n", "Node Count", nb_noeuds1, nb_noeuds2);
+    double total_seq = 0.0, total_par = 0.0;
+    for (iiii = 0; iiii < cpt; iiii++) {
+        total_seq += stats1[iiii];
+        total_par += stats2[iiii];
+    }
+    printf("%-25s %-15.4f %-15.4f\n", "Total Time (s)", total_seq, total_par);
+    if (total_par > 0.0) {
+        printf("%-25s %-15.2f\n", "Speedup", total_seq / total_par);
+    } else {
+        printf("%-25s %-15s\n", "Speedup", "N/A");
+    }
+    printf("===================================================================\n\n");
+
+    // Print principal variation (best move sequence)
+    struct move pv[100];
+    int pv_length = 0;
+    long dummy_nodes = 0, dummy_cuts = 0;
+    minmax_ab_pv(conf, MAX, hauteur, -INFINI, +INFINI, &dummy_nodes, &dummy_cuts, pv, &pv_length);
+    printf("Best move sequence (principal variation): ");
+    char move_alg[5];
+    for (int k = 0; k < pv_length; k++) {
+        move_to_algebraic(pv[k].from_x, pv[k].from_y, pv[k].to_x, pv[k].to_y, move_alg);
+        printf("%s ", move_alg);
+    }
+    printf("\n\n");
+
+    // Also write PV to results.txt for UI parsing
+    f = fopen("results.txt", "a");
+    if (f) {
+        fputs("\n", f);
+        for (int k = 0; k < pv_length; k++) {
+            move_to_algebraic(pv[k].from_x, pv[k].from_y, pv[k].to_x, pv[k].to_y, move_alg);
+            fputs(move_alg, f);
+            fputs(" ", f);
+        }
+        fputs("\n", f);
+        fclose(f);
+    }
+
+    return 0;
 }
 
 
