@@ -20,6 +20,7 @@ struct config {
 	int val;
 	char xrN, yrN, xrB, yrB;
 	char roqueN, roqueB;
+	char move_uci[6]; // UCI move that led to this position
 };
 
 int PawnIsolated = -30;
@@ -119,6 +120,15 @@ void move_to_algebraic(int from_x, int from_y, int to_x, int to_y, char *out) {
     out[4] = '\0';
 }
 
+// Helper to set move_uci in struct config
+void set_move_uci(struct config *child, int from_x, int from_y, int to_x, int to_y) {
+    child->move_uci[0] = from_y + 'a';
+    child->move_uci[1] = (8 - from_x) + '0';
+    child->move_uci[2] = to_y + 'a';
+    child->move_uci[3] = (8 - to_x) + '0';
+    child->move_uci[4] = '\0';
+}
+
 int minmax_ab( struct config conf, int mode, int niv, int min, int max, long * nb_noeuds, long * nb_coupes);
 
 
@@ -138,6 +148,7 @@ void copier( struct config *c1, struct config *c2 )
 
 	c2->roqueB = c1->roqueB;
 	c2->roqueN = c1->roqueN;
+	for (int k = 0; k < 6; k++) c2->move_uci[k] = c1->move_uci[k];
 } 
 
 
@@ -481,25 +492,28 @@ int feuille( struct config conf, int *cout )
 
 void transformPion( struct config conf, int a, int b, int x, int y, struct config T[], int *n )
 {
-	int signe = +1;
-	if (conf.mat[a][b] < 0 ) signe = -1;
-	copier(&conf, &T[*n]);
-	T[*n].mat[a][b] = 0;
-	T[*n].mat[x][y] = signe *'n';
-	(*n)++;
-	copier(&conf, &T[*n]);
-	T[*n].mat[a][b] = 0;
-	T[*n].mat[x][y] = signe *'c';
-	(*n)++;
-	copier(&conf, &T[*n]);
-	T[*n].mat[a][b] = 0;
-	T[*n].mat[x][y] = signe *'f';
-	(*n)++;
-	copier(&conf, &T[*n]);
-	T[*n].mat[a][b] = 0;
-	T[*n].mat[x][y] = signe *'t';
-	(*n)++;
-
+    int signe = +1;
+    if (conf.mat[a][b] < 0 ) signe = -1;
+    copier(&conf, &T[*n]);
+    T[*n].mat[a][b] = 0;
+    T[*n].mat[x][y] = signe *'n';
+    set_move_uci(&T[*n], a, b, x, y);
+    (*n)++;
+    copier(&conf, &T[*n]);
+    T[*n].mat[a][b] = 0;
+    T[*n].mat[x][y] = signe *'c';
+    set_move_uci(&T[*n], a, b, x, y);
+    (*n)++;
+    copier(&conf, &T[*n]);
+    T[*n].mat[a][b] = 0;
+    T[*n].mat[x][y] = signe *'f';
+    set_move_uci(&T[*n], a, b, x, y);
+    (*n)++;
+    copier(&conf, &T[*n]);
+    T[*n].mat[a][b] = 0;
+    T[*n].mat[x][y] = signe *'t';
+    set_move_uci(&T[*n], a, b, x, y);
+    (*n)++;
 }
 
 
@@ -556,6 +570,7 @@ void deplacementsN(struct config conf, int x, int y, struct config T[], int *n )
 			copier(&conf, &T[*n]);
 			T[*n].mat[x][y] = 0;
 			T[*n].mat[x-1][y] = -'p';
+			set_move_uci(&T[*n], x, y, x-1, y);
 			(*n)++;
 			if ( x == 1 ) transformPion( conf, x, y, x-1, y, T, n );
 		}
@@ -563,6 +578,7 @@ void deplacementsN(struct config conf, int x, int y, struct config T[], int *n )
 			copier(&conf, &T[*n]);
 			T[*n].mat[6][y] = 0;
 			T[*n].mat[4][y] = -'p';
+			set_move_uci(&T[*n], x, y, 4, y);
 			(*n)++;
 		}
 		if ( x > 0 && y >0 && conf.mat[x-1][y-1] > 0 ) {
@@ -572,7 +588,7 @@ void deplacementsN(struct config conf, int x, int y, struct config T[], int *n )
 			if (T[*n].xrB == x-1 && T[*n].yrB == y-1) { 
 				T[*n].xrB = -1; T[*n].yrB = -1; 
 			}
-
+			set_move_uci(&T[*n], x, y, x-1, y-1);
 			(*n)++;
 			if ( x == 1 ) transformPion( conf, x, y, x-1, y-1, T, n ); 
 		}
@@ -583,7 +599,7 @@ void deplacementsN(struct config conf, int x, int y, struct config T[], int *n )
 			if (T[*n].xrB == x-1 && T[*n].yrB == y+1) { 
 				T[*n].xrB = -1; T[*n].yrB = -1; 
 			}
-
+			set_move_uci(&T[*n], x, y, x-1, y+1);
 			(*n)++;
 			if ( x == 1 ) transformPion( conf, x, y, x-1, y+1, T, n );
 		}
@@ -599,7 +615,7 @@ void deplacementsN(struct config conf, int x, int y, struct config T[], int *n )
 			   if (T[*n].xrB == x+dC[i][0] && T[*n].yrB == y+dC[i][1]) { 
 				T[*n].xrB = -1; T[*n].yrB = -1; 
 			   }
-
+			   set_move_uci(&T[*n], x, y, x+dC[i][0], y+dC[i][1]);
 			   (*n)++;
 			}
 		break;
@@ -617,7 +633,7 @@ void deplacementsN(struct config conf, int x, int y, struct config T[], int *n )
 			   if ( T[*n].mat[a][b] > 0 ) stop = 1;
 			   T[*n].mat[a][b] = -'f';
 			   if (T[*n].xrB == a && T[*n].yrB == b) { T[*n].xrB = -1; T[*n].yrB = -1; }
-
+			   set_move_uci(&T[*n], x, y, a, b);
 			   (*n)++;
 		   	   a = a + D[i][0];
 		   	   b = b + D[i][1];
@@ -639,7 +655,7 @@ void deplacementsN(struct config conf, int x, int y, struct config T[], int *n )
 			   if ( T[*n].mat[a][b] > 0 ) stop = 1;
 			   T[*n].mat[a][b] = -'t';
 			   if (T[*n].xrB == a && T[*n].yrB == b) { T[*n].xrB = -1; T[*n].yrB = -1; }
-
+			   set_move_uci(&T[*n], x, y, a, b);
 			   if ( conf.roqueN != 'e' && conf.roqueN != 'n' ) {
 			      if ( x == 7 && y == 0 && conf.roqueN != 'p')
 			   	T[*n].roqueN = 'g';
@@ -672,7 +688,7 @@ void deplacementsN(struct config conf, int x, int y, struct config T[], int *n )
 			   if ( T[*n].mat[a][b] > 0 ) stop = 1;
 			   T[*n].mat[a][b] = -'n';
 			   if (T[*n].xrB == a && T[*n].yrB == b) { T[*n].xrB = -1; T[*n].yrB = -1; }
-
+			   set_move_uci(&T[*n], x, y, a, b);
 			   (*n)++;
 		   	   a = a + D[i][0];
 		   	   b = b + D[i][1];
@@ -692,6 +708,7 @@ void deplacementsN(struct config conf, int x, int y, struct config T[], int *n )
 			T[*n].mat[7][2] = -'r'; T[*n].xrN = 7; T[*n].yrN = 2;
 			T[*n].mat[7][3] = -'t';
 			T[*n].roqueN = 'e';
+			set_move_uci(&T[*n], 7, 4, 7, 0);
 			(*n)++;
 		      }
 		   if ( conf.roqueN != 'p' && conf.mat[7][5] == 0 && conf.mat[7][6] == 0 )
@@ -703,6 +720,7 @@ void deplacementsN(struct config conf, int x, int y, struct config T[], int *n )
 			T[*n].mat[7][6] = -'r'; T[*n].xrN = 7; T[*n].yrN = 6;
 			T[*n].mat[7][5] = -'t';
 			T[*n].roqueN = 'e';
+			set_move_uci(&T[*n], 7, 4, 7, 7);
 			(*n)++;
 
 		      }
@@ -717,7 +735,7 @@ void deplacementsN(struct config conf, int x, int y, struct config T[], int *n )
 			   T[*n].mat[x][y] = 0;
 			   T[*n].mat[a][b] = -'r'; T[*n].xrN = a; T[*n].yrN = b;
 			   if (T[*n].xrB == a && T[*n].yrB == b) { T[*n].xrB = -1; T[*n].yrB = -1; }
-
+			   set_move_uci(&T[*n], x, y, a, b);
 			   T[*n].roqueN = 'n';
 			   (*n)++;
 			}
@@ -739,6 +757,7 @@ void deplacementsB(struct config conf, int x, int y, struct config T[], int *n )
 			copier(&conf, &T[*n]);
 			T[*n].mat[x][y] = 0;
 			T[*n].mat[x+1][y] = 'p';
+			set_move_uci(&T[*n], x, y, x+1, y);
 			(*n)++;
 			if ( x == 6 ) transformPion( conf, x, y, x+1, y, T, n );
 		}
@@ -746,6 +765,7 @@ void deplacementsB(struct config conf, int x, int y, struct config T[], int *n )
 			copier(&conf, &T[*n]);
 			T[*n].mat[1][y] = 0;
 			T[*n].mat[3][y] = 'p';
+			set_move_uci(&T[*n], x, y, 3, y);
 			(*n)++;
 		}
 		if ( x < 7 && y > 0 && conf.mat[x+1][y-1] < 0 ) {
@@ -755,7 +775,7 @@ void deplacementsB(struct config conf, int x, int y, struct config T[], int *n )
 			if (T[*n].xrN == x+1 && T[*n].yrN == y-1) { 
 				T[*n].xrN = -1; T[*n].yrN = -1; 
 			}
-
+			set_move_uci(&T[*n], x, y, x+1, y-1);
 			(*n)++;
 			if ( x == 6 ) transformPion( conf, x, y, x+1, y-1, T, n );
 		}
@@ -766,7 +786,7 @@ void deplacementsB(struct config conf, int x, int y, struct config T[], int *n )
 			if (T[*n].xrN == x+1 && T[*n].yrN == y+1) { 
 				T[*n].xrN = -1; T[*n].yrN = -1; 
 			}
-
+			set_move_uci(&T[*n], x, y, x+1, y+1);
 			(*n)++;
 			if ( x == 6 ) transformPion( conf, x, y, x+1, y+1, T, n );
 		}
@@ -782,7 +802,7 @@ void deplacementsB(struct config conf, int x, int y, struct config T[], int *n )
 			   if (T[*n].xrN == x+dC[i][0] && T[*n].yrN == y+dC[i][1]) { 
 				T[*n].xrN = -1; T[*n].yrN = -1; 
 			   }
-
+			   set_move_uci(&T[*n], x, y, x+dC[i][0], y+dC[i][1]);
 			   (*n)++;
 			}
 		break;
@@ -800,7 +820,7 @@ void deplacementsB(struct config conf, int x, int y, struct config T[], int *n )
 			   if ( T[*n].mat[a][b] < 0 ) stop = 1;
 			   T[*n].mat[a][b] = 'f';
 			   if (T[*n].xrN == a && T[*n].yrN == b) { T[*n].xrN = -1; T[*n].yrN = -1; }
-
+			   set_move_uci(&T[*n], x, y, a, b);
 			   (*n)++;
 		   	   a = a + D[i][0];
 		   	   b = b + D[i][1];
@@ -822,7 +842,7 @@ void deplacementsB(struct config conf, int x, int y, struct config T[], int *n )
 			   if ( T[*n].mat[a][b] < 0 ) stop = 1;
 			   T[*n].mat[a][b] = 't';
 			   if (T[*n].xrN == a && T[*n].yrN == b) { T[*n].xrN = -1; T[*n].yrN = -1; }
-
+			   set_move_uci(&T[*n], x, y, a, b);
 			   if ( conf.roqueB != 'e' && conf.roqueB != 'n' ) {
 			     if ( x == 0 && y == 0 && conf.roqueB != 'p')
 			   	T[*n].roqueB = 'g';
@@ -855,7 +875,7 @@ void deplacementsB(struct config conf, int x, int y, struct config T[], int *n )
 			   if ( T[*n].mat[a][b] < 0 ) stop = 1;
 			   T[*n].mat[a][b] = 'n';
 			   if (T[*n].xrN == a && T[*n].yrN == b) { T[*n].xrN = -1; T[*n].yrN = -1; }
-
+			   set_move_uci(&T[*n], x, y, a, b);
 			   (*n)++;
 		   	   a = a + D[i][0];
 		   	   b = b + D[i][1];
@@ -875,6 +895,7 @@ void deplacementsB(struct config conf, int x, int y, struct config T[], int *n )
 			T[*n].mat[0][2] = 'r'; T[*n].xrB = 0; T[*n].yrB = 2;
 			T[*n].mat[0][3] = 't';
 			T[*n].roqueB = 'e';
+			set_move_uci(&T[*n], 0, 4, 0, 0);
 			(*n)++;
 		      }
 		   if ( conf.roqueB != 'p' && conf.mat[0][5] == 0 && conf.mat[0][6] == 0 )
@@ -886,6 +907,7 @@ void deplacementsB(struct config conf, int x, int y, struct config T[], int *n )
 			T[*n].mat[0][6] = 'r'; T[*n].xrB = 0; T[*n].yrB = 6;
 			T[*n].mat[0][5] = 't';
 			T[*n].roqueB = 'e';
+			set_move_uci(&T[*n], 0, 4, 0, 7);
 			(*n)++;
 
 		      }
@@ -900,7 +922,7 @@ void deplacementsB(struct config conf, int x, int y, struct config T[], int *n )
 			   T[*n].mat[x][y] = 0;
 			   T[*n].mat[a][b] = 'r'; T[*n].xrB = a; T[*n].yrB = b;
 			   if (T[*n].xrN == a && T[*n].yrN == b) { T[*n].xrN = -1; T[*n].yrN = -1; }
-
+			   set_move_uci(&T[*n], x, y, a, b);
 			   T[*n].roqueB = 'n';
 			   (*n)++;
 			}
@@ -985,10 +1007,7 @@ int minmax_ab_pv(struct config conf, int mode, int niv, int alpha, int beta, lon
                 best_index = i;
                 if (pv && pv_length) {
                     *pv_length = child_pv_length + 1;
-                    pv[0].from_x = -1; // will fill below
-                    pv[0].from_y = -1;
-                    pv[0].to_x = -1;
-                    pv[0].to_y = -1;
+                    strncpy(pv[0].move_uci, T[i].move_uci, 6);
                     for (int k = 0; k < child_pv_length; k++) pv[k + 1] = child_pv[k];
                 }
             }
@@ -998,21 +1017,7 @@ int minmax_ab_pv(struct config conf, int mode, int niv, int alpha, int beta, lon
                 return beta;
             }
         }
-        if (best_index != -1 && pv && pv_length && *pv_length > 0) {
-            for (int fx = 0; fx < 8; fx++) {
-                for (int fy = 0; fy < 8; fy++) {
-                    if (conf.mat[fx][fy] != 0 && T[best_index].mat[fx][fy] == 0) {
-                        for (int tx = 0; tx < 8; tx++) {
-                            for (int ty = 0; ty < 8; ty++) {
-                                if (conf.mat[fx][fy] != 0 && conf.mat[fx][fy] == T[best_index].mat[tx][ty] && (fx != tx || fy != ty)) {
-                                    pv[0].from_x = fx; pv[0].from_y = fy; pv[0].to_x = tx; pv[0].to_y = ty;
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-        } else if (pv && pv_length) {
+        if (best_index == -1 && pv && pv_length) {
             *pv_length = 0;
         }
     } else {
@@ -1026,10 +1031,7 @@ int minmax_ab_pv(struct config conf, int mode, int niv, int alpha, int beta, lon
                 best_index = i;
                 if (pv && pv_length) {
                     *pv_length = child_pv_length + 1;
-                    pv[0].from_x = -1; // will fill below
-                    pv[0].from_y = -1;
-                    pv[0].to_x = -1;
-                    pv[0].to_y = -1;
+                    strncpy(pv[0].move_uci, T[i].move_uci, 6);
                     for (int k = 0; k < child_pv_length; k++) pv[k + 1] = child_pv[k];
                 }
             }
@@ -1039,21 +1041,7 @@ int minmax_ab_pv(struct config conf, int mode, int niv, int alpha, int beta, lon
                 return alpha;
             }
         }
-        if (best_index != -1 && pv && pv_length && *pv_length > 0) {
-            for (int fx = 0; fx < 8; fx++) {
-                for (int fy = 0; fy < 8; fy++) {
-                    if (conf.mat[fx][fy] != 0 && T[best_index].mat[fx][fy] == 0) {
-                        for (int tx = 0; tx < 8; tx++) {
-                            for (int ty = 0; ty < 8; ty++) {
-                                if (conf.mat[fx][fy] != 0 && conf.mat[fx][fy] == T[best_index].mat[tx][ty] && (fx != tx || fy != ty)) {
-                                    pv[0].from_x = fx; pv[0].from_y = fy; pv[0].to_x = tx; pv[0].to_y = ty;
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-        } else if (pv && pv_length) {
+        if (best_index == -1 && pv && pv_length) {
             *pv_length = 0;
         }
     }
@@ -1344,8 +1332,7 @@ int main( int argc, char *argv[] )
     printf("Best move sequence (principal variation): ");
     char move_alg[5];
     for (int k = 0; k < pv_length; k++) {
-        move_to_algebraic(pv[k].from_x, pv[k].from_y, pv[k].to_x, pv[k].to_y, move_alg);
-        printf("%s ", move_alg);
+        printf("%s ", pv[k].move_uci);
     }
     printf("\n\n");
 
@@ -1354,8 +1341,7 @@ int main( int argc, char *argv[] )
     if (f) {
         fputs("\n", f);
         for (int k = 0; k < pv_length; k++) {
-            move_to_algebraic(pv[k].from_x, pv[k].from_y, pv[k].to_x, pv[k].to_y, move_alg);
-            fputs(move_alg, f);
+            fputs(pv[k].move_uci, f);
             fputs(" ", f);
         }
         fputs("\n", f);
