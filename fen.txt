@@ -1,0 +1,19 @@
+rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1
+# 2. Fool's mate (Black to move, mate in 1)
+rnb1kbnr/pppp1ppp/8/4p3/6Pq/5P2/PPPPP2P/RNBQKBNR b KQkq - 0 3
+# 3. Scholar's mate threat (White to move)
+r1bqkb1r/pppp1ppp/2n2n2/4p3/1b2P3/2N2N2/PPPP1PPP/R1BQKB1R w KQkq - 4 4
+# 4. Endgame: King and pawn vs king
+8/8/8/8/8/4k3/3P4/4K3 w - - 0 1
+# 5. Rook and pawn vs rook (Philidor position)
+8/8/8/8/8/5k2/5P2/5K1R w - - 0 1
+# 6. Black to move, mate in 2
+r1bqkb1r/pppp1ppp/2n2n2/4p3/1b2P3/2N2N2/PPPP1PPP/R1BQKB1R b KQkq - 4 4
+# 7. White to move, underpromotion possible
+8/8/8/8/2k5/8/1P6/2K5 w - - 0 1
+# 8. White to move, en passant possible
+rnbqkbnr/ppp1pppp/8/3pP3/8/8/PPP2PPP/RNBQKBNR w KQkq d6 0 3
+# 9. Black to move, castling possible
+r3k2r/8/8/8/8/8/8/R3K2R b KQkq - 0 1
+# 10. White to move, queen vs pawn
+8/8/8/8/8/8/7p/7K w - - 0 1

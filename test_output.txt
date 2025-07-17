@@ -1,0 +1,11 @@
+
+==================== Chess Engine Search Summary ====================
+Metric                    Sequential      Parallel       
+-------------------------------------------------------------------
+Node Count                6301            14198          
+Total Time (s)            0.0033          0.3249         
+Speedup                   0.01           
+===================================================================
+
+Best move sequence (principal variation): c1a1 
+

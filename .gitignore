@@ -18,3 +18,31 @@ __pycache__/
 # OS files
 .DS_Store
 Thumbs.db 
+
+# Core dumps and debug files
+core*
+*.core
+*.out
+*.gdb
+
+# Editor/project files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# C/C++ build artifacts
+*.o
+*.obj
+*.exe
+*.dll
+*.so
+*.a
+*.log
+
+# Misc
+*.bak
+*.tmp
+
+# End of file 
