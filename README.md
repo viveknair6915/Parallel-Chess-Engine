@@ -1,4 +1,4 @@
-# Parallel Chess Engine: Educational Parallel Search, Visualization, and Analysis
+# Parallel Chess Engine: Parallel Search, Visualization, and Analysis
 
 ---
 
@@ -12,18 +12,40 @@ This project demonstrates the power and challenges of parallel programming in ch
 
 ---
 
-## Educational Context
+## Informative Details & Concepts
 
-Chess programming is a classic AI and computer science challenge. The minimax algorithm with alpha-beta pruning is the foundation of most chess engines. However, parallelizing this search is non-trivial due to the dependencies in pruning. This project explores and visualizes the impact of parallelization using root splitting, a simple and effective technique.
+### Sequential vs. Parallel Search
+- **Sequential Search:** The engine explores the game tree one branch at a time using the minimax algorithm with alpha-beta pruning. This is simple and reliable but only uses one CPU core, limiting speed for deep searches.
+- **Parallel Search:** The engine uses OpenMP to split the evaluation of root moves among multiple threads, each working independently. This allows the engine to utilize all available CPU cores, significantly speeding up analysis for complex positions.
+
+### Key Algorithms and Concepts
+- **Minimax Algorithm:** Recursively evaluates chess positions, assuming both players play optimally.
+- **Alpha-Beta Pruning:** Optimizes minimax by skipping branches that cannot affect the final decision, making search much faster.
+- **OpenMP:** A parallel programming library for C/C++ that enables multi-threaded execution with simple compiler directives.
+- **Root Splitting:** A parallelization technique where each legal move at the root is assigned to a separate thread for evaluation, then results are combined to select the best move.
+
+### Educational and Robust Design
+- The project is designed to be both a high-performance chess engine and a learning tool:
+  - **Rich Evaluation Function:** Considers material, mobility, king safety, pawn structure, threats, and more.
+  - **Interactive Visualization:** The Streamlit UI shows the search tree, principal variation, move annotations, and performance metrics.
+  - **Error Handling:** Defensive programming and bounds checks prevent crashes and make the engine robust to bad input.
+  - **Experimentation:** Python scripts and a Jupyter notebook allow for further analysis and educational experiments.
+
+### Where to Find Key Features in the Code
+- **Engine Logic:** `src/seq_vs_paral.c` (move generation, evaluation, search, parallelization)
+- **UI and Visualization:** `ui.py` (Streamlit app for analysis and exploration)
+- **Plotting and Statistics:** `plot_results.py` (visualizes engine performance)
+- **Educational Experiments:** `parallel_chess_engine.ipynb` (notebook for step-by-step walkthroughs)
+- **Images and Diagrams:** `images/` (visual aids for documentation and UI)
 
 ---
 
 ## Key Features
 
-- **C Engine**: Implements both sequential and parallel alpha-beta search using OpenMP. Includes a rich, educational evaluation function with classic chess heuristics.
-- **Streamlit UI**: Visualizes the search tree, principal variation, move annotations, and performance metrics. Allows custom FEN input and interactive exploration.
-- **Robustness**: Handles illegal moves, edge cases, and provides clear error messages in both terminal and UI.
-- **Visualization**: Includes a plotting script and notebook for performance analysis and experimentation.
+- **C Engine:** Implements both sequential and parallel alpha-beta search using OpenMP. Includes a rich, educational evaluation function with classic chess heuristics.
+- **Streamlit UI:** Visualizes the search tree, principal variation, move annotations, and performance metrics. Allows custom FEN input and interactive exploration.
+- **Robustness:** Handles illegal moves, edge cases, and provides clear error messages in both terminal and UI.
+- **Visualization:** Includes a plotting script and notebook for performance analysis and experimentation.
 
 ---
 
@@ -58,14 +80,14 @@ Chess programming is a classic AI and computer science challenge. The minimax al
 
 ## Streamlit UI: Features & Flow
 
-- **Engine Control**: Run the C engine from the UI, select search depth, and upload previous results.
-- **Custom FEN Input**: Enter any legal FEN to analyze arbitrary positions. Robust validation and feedback.
-- **Results Summary**: View node counts, timing, and speedup for sequential vs. parallel search.
-- **Chessboard Visualization**: Step through root moves and see the board update, with move highlighting.
-- **Best Continuation Tree**: Interactive tree diagram of the best line, with per-node stats and click-to-explore.
-- **Move List & Annotations**: See the principal variation with evaluation scores and chess motifs (check, capture, fork, etc.).
-- **PGN Export**: Download the best line as a PGN for use in chess GUIs.
-- **Error Handling**: Clear messages for illegal FENs, no legal moves, or engine errors.
+- **Engine Control:** Run the C engine from the UI, select search depth, and upload previous results.
+- **Custom FEN Input:** Enter any legal FEN to analyze arbitrary positions. Robust validation and feedback.
+- **Results Summary:** View node counts, timing, and speedup for sequential vs. parallel search.
+- **Chessboard Visualization:** Step through root moves and see the board update, with move highlighting.
+- **Best Continuation Tree:** Interactive tree diagram of the best line, with per-node stats and click-to-explore.
+- **Move List & Annotations:** See the principal variation with evaluation scores and chess motifs (check, capture, fork, etc.).
+- **PGN Export:** Download the best line as a PGN for use in chess GUIs.
+- **Error Handling:** Clear messages for illegal FENs, no legal moves, or engine errors.
 
 ---
 
@@ -106,9 +128,9 @@ python3 plot_results.py
 
 ## Output & Interpretation
 
-- **results.txt**: Contains node counts, timing, principal variation, and legality checks.
-- **UI Visuals**: See best move sequence, search tree, move annotations, and performance metrics.
-- **Plotting**: Bar charts for time and nodes, speedup calculation.
+- **results.txt:** Contains node counts, timing, principal variation, and legality checks.
+- **UI Visuals:** See best move sequence, search tree, move annotations, and performance metrics.
+- **Plotting:** Bar charts for time and nodes, speedup calculation.
 
 ---
 
@@ -126,13 +148,4 @@ python3 plot_results.py
   - Use the "Export Principal Variation as PGN" button in the UI.
 
 ---
-
-## For Presentations: How to Explain This Project
-
-- **Goal**: Show how parallel programming (OpenMP) can speed up chess engine search, and make the process educational and interactive.
-- **C Engine**: Implements both classic and parallel alpha-beta search, with a focus on clarity and educational value.
-- **UI**: Makes the engine accessible, visual, and interactive for all users.
-- **Evaluation**: Rich heuristics, not just material—teaches chess and programming concepts.
-- **Robustness**: Handles errors, illegal moves, and edge cases gracefully.
-- **Visualization**: Bridges the gap between code and chess understanding.
 
